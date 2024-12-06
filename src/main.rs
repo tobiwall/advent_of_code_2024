@@ -8,10 +8,10 @@ fn main() {
     };
 
     input_vec.read_file();
-    // input_vec.sort_column();
-    // let sum_difference = input_vec.compare_numbers();
+    input_vec.sort_column();
+    let sum_difference = input_vec.compare_numbers();
 
-    // println!("The result is: {sum_difference}");
+    println!("The result is: {sum_difference}");
 
 
 
