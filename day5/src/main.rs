@@ -24,19 +24,17 @@ fn main() {
 fn parse_input(lines: &[String]) -> (Vec<(i32, i32)>, Vec<Vec<i32>>) {
     let mut rules = Vec::new();
     let mut updates = Vec::new();
-    
+
     for line in &lines[0..1176] {
         if let Some(pos) = line.find('|') {
             let left: i32 = line[0..pos].trim().parse().unwrap();
-            let right: i32 = line[pos+1..].trim().parse().unwrap();
+            let right: i32 = line[pos + 1..].trim().parse().unwrap();
             rules.push((left, right));
         }
     }
 
     for line in &lines[1177..] {
-        let update: Vec<i32> = line.split(',')
-            .map(|s| s.trim().parse().unwrap())
-            .collect();
+        let update: Vec<i32> = line.split(',').map(|s| s.trim().parse().unwrap()).collect();
         updates.push(update);
     }
 
@@ -45,12 +43,21 @@ fn parse_input(lines: &[String]) -> (Vec<(i32, i32)>, Vec<Vec<i32>>) {
 
 fn count_correctly_ordered_updates(rules: &[(i32, i32)], updates: &[Vec<i32>]) -> Vec<Vec<i32>> {
     let mut correctly_ordered_updates = Vec::new();
+    let mut uncorrect_updates = Vec::new();
 
     for update in updates {
         if is_correctly_ordered(update, rules) {
             correctly_ordered_updates.push(update.clone());
+        } else {
+            let new_update = order_updates(update.to_vec(), rules);
+            uncorrect_updates.push(new_update);
         }
     }
+    let sum_of_middle_page_numbers: i32 = uncorrect_updates
+        .iter()
+        .map(|update| get_middle_page_number(update))
+        .sum();
+    println!("This is new: {sum_of_middle_page_numbers}");
 
     correctly_ordered_updates
 }
@@ -72,4 +79,18 @@ fn get_middle_page_number(update: &[i32]) -> i32 {
     let len = update.len();
     let mid_index = len / 2;
     update[mid_index]
+}
+
+fn order_updates(mut update: Vec<i32>, rules: &[(i32, i32)]) -> Vec<i32> {
+    update.sort_by(|&x, &y| {
+        if rules.contains(&(x, y)) {
+            std::cmp::Ordering::Less
+        } else if rules.contains(&(y, x)) {
+            std::cmp::Ordering::Greater
+        } else {
+            std::cmp::Ordering::Equal
+        }
+    });
+
+    update
 }
