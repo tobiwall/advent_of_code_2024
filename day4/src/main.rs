@@ -1,3 +1,67 @@
+// use std::{
+//     fs::File,
+//     io::{BufRead, BufReader},
+// };
+
+// fn main() {
+//     let path = "input.txt";
+//     let file = File::open(path).expect("Failed to open the file");
+//     let reader = BufReader::new(file);
+//     let lines: Vec<String> = reader.lines().map(|line| line.unwrap()).collect();
+
+//     let result = count_xmas(&lines);
+//     println!("This is the result: {result}");
+// }
+
+// fn count_xmas(lines: &[String]) -> i32 {
+//     let mut total_count = 0;
+//     let directions = [
+//         (1, 0),
+//         (-1, 0),
+//         (0, 1),
+//         (0, -1),
+//         (1, 1),
+//         (1, -1),
+//         (-1, 1),
+//         (-1, -1),
+//     ];
+
+//     for (line_num, line) in lines.iter().enumerate() {
+//         for (char_index, _) in line.chars().enumerate() {
+//             for (dx, dy) in directions.iter() {
+//                 if check_direction(line_num as i32, char_index as i32, *dx, *dy, lines) {
+//                     total_count += 1;
+//                 }
+//             }
+//         }
+//     }
+
+//     total_count
+// }
+
+// fn check_direction(
+//     start_row: i32,
+//     start_col: i32,
+//     dx: i32,
+//     dy: i32,
+//     lines: &[String],
+// ) -> bool {
+//     let word = ['X', 'M', 'A', 'S'];
+//     for (i, &letter) in word.iter().enumerate() {
+//         let row = start_row + i as i32 * dx;
+//         let col = start_col + i as i32 * dy;
+//         if row < 0
+//             || col < 0
+//             || row as usize >= lines.len()
+//             || col as usize >= lines[row as usize].len()
+//             || lines[row as usize].chars().nth(col as usize) != Some(letter)
+//         {
+//             return false;
+//         }
+//     }
+//     true
+// }
+
 use std::{
     fs::File,
     io::{BufRead, BufReader},
@@ -15,21 +79,11 @@ fn main() {
 
 fn count_xmas(lines: &[String]) -> i32 {
     let mut total_count = 0;
-    let directions = [
-        (1, 0),
-        (-1, 0),
-        (0, 1),
-        (0, -1),
-        (1, 1),
-        (1, -1),
-        (-1, 1),
-        (-1, -1),
-    ];
 
     for (line_num, line) in lines.iter().enumerate() {
         for (char_index, _) in line.chars().enumerate() {
-            for (dx, dy) in directions.iter() {
-                if check_direction(line_num as i32, char_index as i32, *dx, *dy, lines) {
+            if line.chars().nth(char_index) == Some('A') {
+                if check_xmas(line_num, char_index, lines) {
                     total_count += 1;
                 }
             }
@@ -39,29 +93,59 @@ fn count_xmas(lines: &[String]) -> i32 {
     total_count
 }
 
-fn check_direction(
-    start_row: i32,
-    start_col: i32,
-    dx: i32,
-    dy: i32,
-    lines: &[String],
-) -> bool {
-    let word = ['X', 'M', 'A', 'S'];
-    for (i, &letter) in word.iter().enumerate() {
-        let row = start_row + i as i32 * dx;
-        let col = start_col + i as i32 * dy;
-        if row < 0
-            || col < 0
-            || row as usize >= lines.len()
-            || col as usize >= lines[row as usize].len()
-            || lines[row as usize].chars().nth(col as usize) != Some(letter)
-        {
-            return false;
-        }
-    }
-    true
-}
+fn check_xmas(line_num: usize, char_index: usize, lines: &[String]) -> bool {
+    let mut valid = false;
 
+    if line_num > 0
+        && char_index > 0
+        && line_num + 1 < lines.len()
+        && char_index + 1 < lines[line_num + 1].len()
+        && lines[line_num - 1].chars().nth(char_index - 1) == Some('M')
+        && lines[line_num + 1].chars().nth(char_index - 1) == Some('M')
+        && lines[line_num - 1].chars().nth(char_index + 1) == Some('S')
+        && lines[line_num + 1].chars().nth(char_index + 1) == Some('S')
+    {
+        valid = true;
+    }
+
+    if line_num > 0
+        && char_index > 0
+        && line_num + 1 < lines.len()
+        && char_index + 1 < lines[line_num + 1].len()
+        && lines[line_num - 1].chars().nth(char_index - 1) == Some('S')
+        && lines[line_num + 1].chars().nth(char_index - 1) == Some('S')
+        && lines[line_num - 1].chars().nth(char_index + 1) == Some('M')
+        && lines[line_num + 1].chars().nth(char_index + 1) == Some('M')
+    {
+        valid = true;
+    }
+
+    if line_num + 1 < lines.len()
+        && char_index > 0
+        && char_index + 1 < lines[line_num + 1].len()
+        && lines[line_num + 1].chars().nth(char_index - 1) == Some('S')
+        && lines[line_num + 1].chars().nth(char_index + 1) == Some('S')
+        && line_num > 0
+        && lines[line_num - 1].chars().nth(char_index - 1) == Some('M')
+        && lines[line_num - 1].chars().nth(char_index + 1) == Some('M')
+    {
+        valid = true;
+    }
+
+    if line_num + 1 < lines.len()
+        && char_index > 0
+        && char_index + 1 < lines[line_num + 1].len()
+        && lines[line_num + 1].chars().nth(char_index - 1) == Some('M')
+        && lines[line_num + 1].chars().nth(char_index + 1) == Some('M')
+        && line_num > 0
+        && lines[line_num - 1].chars().nth(char_index - 1) == Some('S')
+        && lines[line_num - 1].chars().nth(char_index + 1) == Some('S')
+    {
+        valid = true;
+    }
+
+    valid
+}
 
 /*
 use std::{
