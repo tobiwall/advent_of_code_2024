@@ -83,7 +83,6 @@ impl Lab {
 
     fn walk(&mut self) -> HashSet<Pos> {
         let mut visited = HashSet::new();
-
         loop {
             visited.insert(self.guard.pos);
             let next = self.guard.pos + self.guard.dir.offset();
@@ -107,9 +106,7 @@ fn main() {
         .map(|line| line.unwrap())
         .collect::<Vec<String>>()
         .join("\n");
-
     let lines_as_str: &str = &lines;
-
     let count = Lab::from(lines_as_str).walk().len() as u32;
-    println!("{count}")
+    println!("{count}");
 }
