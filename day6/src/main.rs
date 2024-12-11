@@ -10,12 +10,13 @@ struct Lab {
     guard: Guard,
 }
 
+#[derive(Clone, Copy)]
 struct Guard {
     pos: Pos,
     dir: Dir,
 }
 
-#[derive(Default, Clone, Copy, Eq, Hash, PartialEq)]
+#[derive(Default, Clone, Debug, Copy, Eq, Hash, PartialEq)]
 struct Pos(i32, i32);
 
 impl Add<Off> for Pos {
@@ -28,7 +29,7 @@ impl Add<Off> for Pos {
 
 struct Off(i32, i32);
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 enum Dir {
     Up,
     Down,
@@ -81,12 +82,21 @@ impl Lab {
         self.grid.get(x as usize)?.get(y as usize).copied()
     }
 
+    fn set(&mut self, Pos(x, y): Pos, val: u8) {
+        if let Some(cell) = self
+            .grid
+            .get_mut(x as usize)
+            .and_then(|row| row.get_mut(y as usize))
+        {
+            *cell = val;
+        }
+    }
+
     fn walk(&mut self) -> HashSet<Pos> {
         let mut visited = HashSet::new();
         loop {
             visited.insert(self.guard.pos);
             let next = self.guard.pos + self.guard.dir.offset();
-
             match self.get(next) {
                 Some(b'#') => self.guard.dir = self.guard.dir.turn(),
                 Some(_) => self.guard.pos = next,
@@ -94,6 +104,28 @@ impl Lab {
             }
         }
         visited
+    }
+
+    fn looping(&mut self, origin: Guard, obstacle: Pos) -> bool {
+        let mut visited = HashSet::new();
+
+        self.guard = origin;
+        self.set(obstacle, b'0');
+
+        let looping = loop {
+            if !visited.insert((self.guard.pos, self.guard.dir)) {
+                break true;
+            }
+            let next = self.guard.pos + self.guard.dir.offset();
+
+            match self.get(next) {
+                Some(b'#' | b'0') => self.guard.dir = self.guard.dir.turn(),
+                Some(_) => self.guard.pos = next,
+                None => break false,
+            }
+        };
+        self.set(obstacle, b'.');
+        looping
     }
 }
 
@@ -107,6 +139,25 @@ fn main() {
         .collect::<Vec<String>>()
         .join("\n");
     let lines_as_str: &str = &lines;
-    let count = Lab::from(lines_as_str).walk().len() as u32;
-    println!("{count}");
+
+    part_one(lines_as_str);
+    part_two(lines_as_str);
+}
+
+fn part_one(lines: &str) {
+    let count = Lab::from(lines).walk().len() as u32;
+    println!("Part 1: {count}");
+}
+
+fn part_two(lines: &str) {
+    let mut lab = Lab::from(lines);
+    let origin = lab.guard;
+    let visited = lab.walk();
+
+    let count = visited
+        .iter()
+        .filter(|&&obstacle| lab.looping(origin, obstacle))
+        .count() as i32;
+
+    println!("Part 2: {count}");
 }
