@@ -49,21 +49,12 @@ fn find_combination(numbers: &[i32], key: i64) -> bool {
             return vec![current_value];
         }
 
-        let mut results = Vec::new();
-
-        results.extend(evaluate_expressions(
-            numbers,
-            idx + 1,
-            current_value + numbers[idx] as i64,
-        ));
-
-        results.extend(evaluate_expressions(
-            numbers,
-            idx + 1,
-            current_value * numbers[idx] as i64,
-        ));
-
-        results
+        let current_num = numbers[idx] as i64;
+        [
+            evaluate_expressions(numbers, idx + 1, current_value + current_num),
+            evaluate_expressions(numbers, idx + 1, current_value * current_num),
+        ]
+        .concat()
     }
     let possible_results = evaluate_expressions(numbers, 1, numbers[0] as i64);
     possible_results.contains(&key)
@@ -75,24 +66,21 @@ fn find_combination_with_concat(numbers: &[i32], key: i64) -> bool {
             return vec![current_value];
         }
 
+        let num = numbers[idx] as i64;
         let mut results = Vec::new();
 
-        results.extend(evaluate_expressions(
-            numbers,
-            idx + 1,
-            current_value + numbers[idx] as i64,
-        ));
-
-        results.extend(evaluate_expressions(
-            numbers,
-            idx + 1,
-            current_value * numbers[idx] as i64,
-        ));
-
-        let combined_value = format!("{}{}", current_value, numbers[idx])
-            .parse::<i64>()
-            .unwrap_or(current_value);
-        results.extend(evaluate_expressions(numbers, idx + 1, combined_value));
+        for (_op, next_value) in [
+            ('+', current_value + num),
+            ('*', current_value * num),
+            (
+                '|',
+                format!("{}{}", current_value, num)
+                    .parse::<i64>()
+                    .unwrap_or(current_value),
+            ),
+        ] {
+            results.extend(evaluate_expressions(numbers, idx + 1, next_value));
+        }
 
         results
     }
