@@ -16,72 +16,88 @@ struct OneChar {
 struct Distance(i32, i32);
 
 fn main() {
-    let path = "input.txt";
-    let file = File::open(path).expect("Failed to open the file");
-    let reader = BufReader::new(file);
-    let lines = reader
+    let lines = BufReader::new(File::open("input.txt").expect("Failed to open the file"))
         .lines()
         .map(|line| line.unwrap())
         .collect::<Vec<String>>();
-    let mut char_single: Vec<char> = Vec::new();
-    let mut all_chars: Vec<OneChar> = Vec::new();
+
+    let mut char_single = Vec::new();
+    let mut all_chars = Vec::new();
+
     get_all_chars(&mut char_single, &mut all_chars, lines);
     check_each_char(char_single, all_chars);
 }
 
 fn get_all_chars(char_single: &mut Vec<char>, all_chars: &mut Vec<OneChar>, lines: Vec<String>) {
-    let mut row = 0;
-    for line in lines {
-        let mut x = 0;
-        for c in line.chars() {
-            if find_chars(c) {
-                let char = OneChar {
+    lines.iter().enumerate().for_each(|(row, line)| {
+        line.chars().enumerate().for_each(|(x, c)| {
+            if c != '.' {
+                all_chars.push(OneChar {
                     char: c,
-                    pos: Pos(row, x),
-                };
-                all_chars.push(char);
+                    pos: Pos(row as i32, x as i32),
+                });
                 if !char_single.contains(&c) {
                     char_single.push(c);
                 }
             }
-            x += 1;
-        }
-        row += 1;
-    }
-}
-
-fn find_chars(char: char) -> bool {
-    char != '.'
+        });
+    });
 }
 
 fn check_each_char(char_single: Vec<char>, all_chars: Vec<OneChar>) {
-    let mut count = 0;
-    let mut locations = Vec::new();
+    let mut count: i32 = 0;
+    let mut count_part2: i32 = 0;
+    let mut locations: Vec<Pos> = Vec::new();
+    let mut locations_part2: Vec<Pos> = Vec::new();
     for char in char_single {
         let same_chars: Vec<&OneChar> = all_chars.iter().filter(|c| c.char == char).collect();
         for next_char in &same_chars {
             for second_char in &same_chars {
                 if next_char != second_char {
                     let distance = check_distance(next_char, second_char);
-                    let x = second_char.pos.0 + distance.0;
-                    let y = second_char.pos.1 + distance.1;
-                    let location = Pos(x, y);
-                    if location.0 <= 49 && location.0 >= 0 && location.1 <= 49 && location.1 >= 0 {
+                    let location = Pos(
+                        second_char.pos.0 + distance.0,
+                        second_char.pos.1 + distance.1,
+                    );
+                    if (0..50).contains(&location.0) && (0..50).contains(&location.1) {
                         if !locations.contains(&location) {
+                            if !locations_part2.contains(&location) {
+                                count_part2 += 1;
+                            }
                             count += 1;
                         }
+                        let mut new_location = location;
+                        while (0..50).contains(&new_location.0) && (0..50).contains(&new_location.1)
+                        {
+                            new_location.0 += distance.0;
+                            new_location.1 += distance.1;
+                            if (0..50).contains(&new_location.0)
+                                && (0..50).contains(&new_location.1)
+                                && !locations.contains(&new_location)
+                                && !locations_part2.contains(&new_location)
+                            {
+                                count_part2 += 1;
+                                locations_part2.push(new_location);
+                            }
+                        }
                     }
-                    locations.push(location.clone());
+                    locations.push(location);
+                }
+                if !locations_part2.contains(&second_char.pos)
+                    && !locations.contains(&second_char.pos)
+                {
+                    count_part2 += 1;
+                    locations_part2.push(second_char.pos);
                 }
             }
         }
     }
-    println!("{count}");
+    println!("Part1: {count}");
+    println!("Part2: {count_part2}");
 }
 
 fn check_distance(first: &OneChar, next: &OneChar) -> Distance {
     let dx = next.pos.0 - first.pos.0;
     let dy = next.pos.1 - first.pos.1;
-
     Distance(dx, dy)
 }
